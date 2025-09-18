@@ -1,0 +1,81 @@
+#!/bin/bash
+
+# macOS Quick Commands for NewsBot
+# Copy and paste these commands in your terminal
+
+echo "🍎 NewsBot macOS Quick Setup Commands"
+echo "======================================"
+echo ""
+
+echo "1️⃣  INSTALL PREREQUISITES:"
+echo "# Install Homebrew (if not installed)"
+echo '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+echo ""
+echo "# Install Node.js"
+echo "brew install node"
+echo ""
+
+echo "2️⃣  CLONE AND SETUP:"
+echo "# Clone the repository"
+echo "git clone https://github.com/your-username/rag-news-chatbot.git"
+echo "cd rag-news-chatbot"
+echo ""
+echo "# Install dependencies"
+echo "npm install"
+echo ""
+
+echo "3️⃣  ENVIRONMENT SETUP:"
+echo "# Create environment file"
+echo "cp .env.example .env.local"
+echo ""
+echo "# Edit with your API keys"
+echo "nano .env.local"
+echo ""
+
+echo "4️⃣  INITIALIZE DATA:"
+echo "# Test environment"
+echo "npm run test:env"
+echo ""
+echo "# Setup news data and embeddings"
+echo "npm run deploy:setup"
+echo ""
+
+echo "5️⃣  START DEVELOPMENT:"
+echo "# Start the server"
+echo "npm run dev"
+echo ""
+echo "# Open in browser"
+echo "open http://localhost:3000"
+echo ""
+
+echo "6️⃣  TESTING COMMANDS:"
+echo "# Health check"
+echo "curl http://localhost:3000/api/health"
+echo ""
+echo "# System tests"
+echo "npm run test:system"
+echo ""
+
+echo "🔧 TROUBLESHOOTING:"
+echo "# Check Node.js version (should be 18+)"
+echo "node --version"
+echo ""
+echo "# Kill process on port 3000"
+echo "kill -9 \$(lsof -ti:3000)"
+echo ""
+echo "# Run on different port"
+echo "npm run dev -- -p 3001"
+echo ""
+
+echo "📋 USEFUL COMMANDS:"
+echo "# View logs"
+echo "tail -f .next/trace"
+echo ""
+echo "# Check environment variables"
+echo "cat .env.local"
+echo ""
+echo "# Update project"
+echo "git pull && npm install"
+echo ""
+
+echo "🎉 Ready to go! Copy the commands above and run them step by step."
