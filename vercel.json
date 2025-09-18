@@ -9,9 +9,11 @@
     }
   },
   "env": {
-    "GEMINI_API_KEY": "@gemini_api_key",
-    "REDIS_URL": "@redis_url",
-    "JINA_API_KEY": "@jina_api_key"
+    "GEMINI_API_KEY": "AIzaSyCeLJTji1YR0DS5bL7Pmj88JJaDsBsXJtI",
+    "JINA_API_KEY": "jina_bd56500a87dd489b9991cdccec4b78a3FZa9ymYyqx0rbaZ5dl7lqUIl7S8Z",
+    "KV_REST_API_URL":"https://willing-kid-64189.upstash.io",
+    "KV_REST_API_TOKEN":"Afq9AAIncDE4ZWIzYWM3ZmM0NTQ0MjUyOTVhN2EyYTBkZTVjMTRhZHAxNjQxODk",
+    "KV_REST_API_READ_ONLY_TOKEN":"Avq9AAIgcDF2SualtM9-sbxagj7y33Jg3Od7m6PKyrp3JvohluhO1A"
   },
   "build": {
     "env": {
