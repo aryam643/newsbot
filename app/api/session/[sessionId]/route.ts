@@ -1,17 +1,20 @@
-// Session management API endpoints
+// app/api/session/[sessionId]/route.ts
 import { type NextRequest, NextResponse } from "next/server"
 import { getSessionHistory, clearSession } from "@/lib/redis"
 
 // Get session history
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{ sessionId: string }> },
+  context: { params: { sessionId: string } },
 ) {
   try {
-    const { sessionId } = await context.params
+    const { sessionId } = context.params
 
     if (!sessionId) {
-      return NextResponse.json({ error: "Session ID is required" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Session ID is required" },
+        { status: 400 },
+      )
     }
 
     const history = await getSessionHistory(sessionId)
@@ -23,20 +26,26 @@ export async function GET(
     })
   } catch (error) {
     console.error("[news-bot] Session history API error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    )
   }
 }
 
 // Clear session history
 export async function DELETE(
   request: NextRequest,
-  context: { params: Promise<{ sessionId: string }> },
+  context: { params: { sessionId: string } },
 ) {
   try {
-    const { sessionId } = await context.params
+    const { sessionId } = context.params
 
     if (!sessionId) {
-      return NextResponse.json({ error: "Session ID is required" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Session ID is required" },
+        { status: 400 },
+      )
     }
 
     const success = await clearSession(sessionId)
@@ -47,10 +56,16 @@ export async function DELETE(
         sessionId,
       })
     } else {
-      return NextResponse.json({ error: "Failed to clear session" }, { status: 500 })
+      return NextResponse.json(
+        { error: "Failed to clear session" },
+        { status: 500 },
+      )
     }
   } catch (error) {
     console.error("[news-bot] Session clear API error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    )
   }
 }
