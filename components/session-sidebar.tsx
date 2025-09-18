@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -26,6 +25,7 @@ interface SessionSidebarProps {
   onDeleteSession: (sessionId: string) => void
   isCollapsed: boolean
   onToggleCollapse: () => void
+  onUpdateSession: (updateFn: (messages: any[]) => void) => void
 }
 
 export function SessionSidebar({
@@ -35,13 +35,16 @@ export function SessionSidebar({
   onDeleteSession,
   isCollapsed,
   onToggleCollapse,
+  onUpdateSession,
 }: SessionSidebarProps) {
   const [sessions, setSessions] = useState<SessionInfo[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
   // Load sessions from localStorage on mount
   useEffect(() => {
-    loadSessions()
+    if (typeof window !== "undefined") {
+      loadSessions()
+    }
   }, [])
 
   const loadSessions = () => {
@@ -56,7 +59,8 @@ export function SessionSidebar({
         }))
         setSessions(
           sessionsWithDates.sort(
-            (a: SessionInfo, b: SessionInfo) => b.lastActivity.getTime() - a.lastActivity.getTime(),
+            (a: SessionInfo, b: SessionInfo) =>
+              b.lastActivity.getTime() - a.lastActivity.getTime(),
           ),
         )
       }
@@ -84,8 +88,8 @@ export function SessionSidebar({
     if (messages.length === 0) return
 
     const lastUserMessage = messages.filter((m) => m.role === "user").pop()
-    const title = lastUserMessage?.content.substring(0, 50) + "..." || "New Chat"
-    const preview = messages[messages.length - 1]?.content.substring(0, 100) + "..." || ""
+    const title = lastUserMessage?.content?.substring(0, 50) + "..." || "New Chat"
+    const preview = messages[messages.length - 1]?.content?.substring(0, 100) + "..." || ""
 
     const sessionInfo: SessionInfo = {
       id: currentSessionId,
@@ -98,6 +102,11 @@ export function SessionSidebar({
 
     saveSession(sessionInfo)
   }
+
+  // Pass updater to parent
+  useEffect(() => {
+    onUpdateSession(updateCurrentSession)
+  }, [currentSessionId, sessions])
 
   const handleDeleteSession = async (sessionId: string, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -138,14 +147,10 @@ export function SessionSidebar({
     return date.toLocaleDateString()
   }
 
-  // Expose updateCurrentSession to parent
-  useEffect(() => {
-    ;(window as any).updateCurrentSession = updateCurrentSession
-  }, [currentSessionId, sessions])
-
   if (isCollapsed) {
     return (
-<div className="h-full border-r border-border bg-card/50 flex flex-col items-center py-4 gap-2">        <Button variant="ghost" size="sm" onClick={onToggleCollapse} className="w-8 h-8 p-0">
+      <div className="h-full border-r border-border bg-card/50 flex flex-col items-center py-4 gap-2">
+        <Button variant="ghost" size="sm" onClick={onToggleCollapse} className="w-8 h-8 p-0">
           <ChevronRight className="w-4 h-4" />
         </Button>
         <Button variant="ghost" size="sm" onClick={onNewSession} className="w-8 h-8 p-0">
@@ -170,7 +175,8 @@ export function SessionSidebar({
   }
 
   return (
-<div className="h-full border-r border-border bg-card/50 flex flex-col">      {/* Header */}
+    <div className="h-full border-r border-border bg-card/50 flex flex-col">
+      {/* Header */}
       <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-semibold text-foreground font-[family-name:var(--font-space-grotesk)]">Chat Sessions</h2>

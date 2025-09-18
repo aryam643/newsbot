@@ -58,6 +58,7 @@ export function ChatInterface() {
 
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+const sessionUpdaterRef = useRef<((messages: any[]) => void) | null>(null)
 
   // generate session ID on mount
   useEffect(() => {
@@ -75,10 +76,10 @@ export function ChatInterface() {
     }
   }, [messages])
 
-  // update session info in localStorage
+  // update session info in localStorage via SessionSidebar
   useEffect(() => {
-    if (messages.length > 0 && (window as any).updateCurrentSession) {
-      ;(window as any).updateCurrentSession(messages)
+    if (messages.length > 0 && sessionUpdaterRef.current) {
+      sessionUpdaterRef.current(messages)
     }
   }, [messages])
 
@@ -223,15 +224,15 @@ export function ChatInterface() {
       <ResizablePanelGroup direction="horizontal" className="flex-1">
         {/* Sidebar */}
         <ResizablePanel
-          defaultSize={20}
+          defaultSize={22}
           minSize={15}
           maxSize={30}
           collapsible
           collapsedSize={sidebarCollapsed ? 4 : undefined}
           className={cn(
-          "transition-all duration-200",
-          sidebarCollapsed && "min-w-[4rem] max-w-[4rem]"
-        )}
+            "transition-all duration-200",
+            sidebarCollapsed && "min-w-[4rem] max-w-[4rem]"
+          )}
         >
           <SessionSidebar
             currentSessionId={sessionId}
@@ -240,6 +241,9 @@ export function ChatInterface() {
             onDeleteSession={handleDeleteSession}
             isCollapsed={sidebarCollapsed}
             onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+            onUpdateSession={(updater) => {
+              sessionUpdaterRef.current = updater // ✅ save updater
+            }}
           />
         </ResizablePanel>
 
@@ -319,151 +323,151 @@ export function ChatInterface() {
                 </AlertDescription>
               </Alert>
             )}
-    <div className="flex-1 flex flex-col mx-auto w-full max-w-3xl">
 
-            {/* Messages */}
-            <ScrollArea className="flex-1 p-4 overflow-y-auto" ref={scrollAreaRef}>
-              <div className="space-y-4">
-                {messages.length === 0 && !isLoadingHistory && (
-                  <div className="text-center py-12">
-                    <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-foreground mb-2">
-                      Welcome to NewsBot
-                    </h3>
-                    <p className="text-muted-foreground max-w-md mx-auto mb-4">
-                      Ask me anything about recent news articles. I'll search and
-                      provide accurate, sourced information.
-                    </p>
-                    <div className="flex flex-wrap gap-2 justify-center max-w-lg mx-auto">
-                      <Badge
-                        variant="secondary"
-                        className="cursor-pointer"
-                        onClick={() => setInput("What's the latest technology news?")}
-                      >
-                        Technology news
-                      </Badge>
-                      <Badge
-                        variant="secondary"
-                        className="cursor-pointer"
-                        onClick={() => setInput("Tell me about recent political developments")}
-                      >
-                        Political updates
-                      </Badge>
-                      <Badge
-                        variant="secondary"
-                        className="cursor-pointer"
-                        onClick={() => setInput("What are the breaking news stories today?")}
-                      >
-                        Breaking news
-                      </Badge>
-                    </div>
-                  </div>
-                )}
-
-                {isLoadingHistory && (
-                  <div className="text-center py-8">
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                      <span className="text-sm text-muted-foreground">
-                        Loading session history...
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {messages.map((m) => (
-                  <div
-                    key={m.id}
-                    className={cn(
-                      "flex gap-3 max-w-3xl",
-                      m.role === "user" ? "ml-auto flex-row-reverse" : "mr-auto"
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        "flex items-center justify-center w-8 h-8 rounded-full flex-shrink-0",
-                        m.role === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-muted-foreground"
-                      )}
-                    >
-                      {m.role === "user" ? "U" : <Newspaper className="w-4 h-4" />}
-                    </div>
-
-                    <Card
-                      className={cn(
-                        "p-4 max-w-[80%] relative",
-                        m.role === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-card"
-                      )}
-                    >
-                      {m.cached && (
+            <div className="flex-1 flex flex-col mx-auto w-full max-w-3xl">
+              {/* Messages */}
+              <ScrollArea className="flex-1 p-4 overflow-y-auto" ref={scrollAreaRef}>
+                <div className="space-y-4">
+                  {messages.length === 0 && !isLoadingHistory && (
+                    <div className="text-center py-12">
+                      <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-foreground mb-2">
+                        Welcome to NewsBot
+                      </h3>
+                      <p className="text-muted-foreground max-w-md mx-auto mb-4">
+                        Ask me anything about recent news articles. I'll search and
+                        provide accurate, sourced information.
+                      </p>
+                      <div className="flex flex-wrap gap-2 justify-center max-w-lg mx-auto">
                         <Badge
                           variant="secondary"
-                          className="absolute -top-2 -right-2 text-xs"
+                          className="cursor-pointer"
+                          onClick={() => setInput("What's the latest technology news?")}
                         >
-                          <Clock className="w-3 h-3 mr-1" />
-                          Cached
+                          Technology news
                         </Badge>
-                      )}
-                      <p className="text-sm whitespace-pre-wrap">{m.content}</p>
-                      {m.sources && (
-                        <div className="mt-3 pt-3 border-t border-border/20">
-                          <p className="text-xs text-muted-foreground mb-2">Sources:</p>
-                          {m.sources.map((s, i) => (
-                            <p key={i} className="text-xs text-muted-foreground">
-                              • {s}
-                            </p>
-                          ))}
-                        </div>
-                      )}
-                      <p className="text-xs text-muted-foreground/70 mt-2">
-                        {m.timestamp.toLocaleTimeString()}
-                      </p>
-                    </Card>
-                  </div>
-                ))}
-
-                {isLoading && (
-                  <div className="flex gap-3 max-w-3xl mr-auto">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-muted-foreground">
-                      <Newspaper className="w-4 h-4" />
+                        <Badge
+                          variant="secondary"
+                          className="cursor-pointer"
+                          onClick={() => setInput("Tell me about recent political developments")}
+                        >
+                          Political updates
+                        </Badge>
+                        <Badge
+                          variant="secondary"
+                          className="cursor-pointer"
+                          onClick={() => setInput("What are the breaking news stories today?")}
+                        >
+                          Breaking news
+                        </Badge>
+                      </div>
                     </div>
-                    <Card className="p-4 bg-card">
-                      <span className="text-sm text-muted-foreground">
-                        Searching news articles...
-                      </span>
-                    </Card>
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
+                  )}
 
-            {/* Input */}
-            <div className="border-t border-border bg-card/50 p-4">
-              <form onSubmit={handleSubmit} className="flex gap-2">
-                <Input
-                  ref={inputRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask me about recent news... (Ctrl+K to focus)"
-                  disabled={isLoading}
-                  className="flex-1"
-                />
-                <Button
-                  type="submit"
-                  disabled={!input.trim() || isLoading}
-                  className="gap-2"
-                >
-                  <Send className="w-4 h-4" /> Send
-                </Button>
-              </form>
-              <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-                <p>Session: {sessionId.split("_")[1]}</p>
-                <p>Ctrl+K focus • Ctrl+R reset • Ctrl+N new • Ctrl+B sidebar</p>
+                  {isLoadingHistory && (
+                    <div className="text-center py-8">
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                        <span className="text-sm text-muted-foreground">
+                          Loading session history...
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {messages.map((m) => (
+                    <div
+                      key={m.id}
+                      className={cn(
+                        "flex gap-3 max-w-3xl",
+                        m.role === "user" ? "ml-auto flex-row-reverse" : "mr-auto"
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          "flex items-center justify-center w-8 h-8 rounded-full flex-shrink-0",
+                          m.role === "user"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground"
+                        )}
+                      >
+                        {m.role === "user" ? "U" : <Newspaper className="w-4 h-4" />}
+                      </div>
+
+                      <Card
+                        className={cn(
+                          "p-4 max-w-[80%] relative",
+                          m.role === "user"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-card"
+                        )}
+                      >
+                        {m.cached && (
+                          <Badge
+                            variant="secondary"
+                            className="absolute -top-2 -right-2 text-xs"
+                          >
+                            <Clock className="w-3 h-3 mr-1" />
+                            Cached
+                          </Badge>
+                        )}
+                        <p className="text-sm whitespace-pre-wrap">{m.content}</p>
+                        {m.sources && (
+                          <div className="mt-3 pt-3 border-t border-border/20">
+                            <p className="text-xs text-muted-foreground mb-2">Sources:</p>
+                            {m.sources.map((s, i) => (
+                              <p key={i} className="text-xs text-muted-foreground">
+                                • {s}
+                              </p>
+                            ))}
+                          </div>
+                        )}
+                        <p className="text-xs text-muted-foreground/70 mt-2">
+                          {m.timestamp.toLocaleTimeString()}
+                        </p>
+                      </Card>
+                    </div>
+                  ))}
+
+                  {isLoading && (
+                    <div className="flex gap-3 max-w-3xl mr-auto">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-muted-foreground">
+                        <Newspaper className="w-4 h-4" />
+                      </div>
+                      <Card className="p-4 bg-card">
+                        <span className="text-sm text-muted-foreground">
+                          Searching news articles...
+                        </span>
+                      </Card>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+
+              {/* Input */}
+              <div className="border-t border-border bg-card/50 p-4">
+                <form onSubmit={handleSubmit} className="flex gap-2">
+                  <Input
+                    ref={inputRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="Ask me about recent news... (Ctrl+K to focus)"
+                    disabled={isLoading}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="submit"
+                    disabled={!input.trim() || isLoading}
+                    className="gap-2"
+                  >
+                    <Send className="w-4 h-4" /> Send
+                  </Button>
+                </form>
+                <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+                  <p>Session: {sessionId.split("_")[1]}</p>
+                  <p>Ctrl+K focus • Ctrl+R reset • Ctrl+N new • Ctrl+B sidebar</p>
+                </div>
               </div>
-            </div>
             </div>
           </div>
         </ResizablePanel>
