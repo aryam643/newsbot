@@ -9,6 +9,18 @@ import { Badge } from "@/components/ui/badge"
 import { MessageSquare, Plus, Trash2, Clock, User, ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 
+
+const LS_HISTORY_PREFIX = "newsbot_history_";
+function getCountFromLocal(sessionId: string): number {
+  try {
+    const raw = localStorage.getItem(LS_HISTORY_PREFIX + sessionId);
+    if (!raw) return 0;
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.length : 0;
+  } catch { return 0; }
+}
+
+
 interface SessionInfo {
   id: string
   title: string
@@ -147,8 +159,13 @@ export function SessionSidebar({
     return date.toLocaleDateString()
   }
 
+  useEffect(() => {
+    setSessions(prev => prev.map(s => ({ ...s, messageCount: getCountFromLocal(s.id) })))
+  }, [])
+
   if (isCollapsed) {
-    return (
+    
+return (
       <div className="h-full border-r border-border bg-card/50 flex flex-col items-center py-4 gap-2">
         <Button variant="ghost" size="sm" onClick={onToggleCollapse} className="w-8 h-8 p-0">
           <ChevronRight className="w-4 h-4" />

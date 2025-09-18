@@ -23,6 +23,24 @@ import {
   Menu,
 } from "lucide-react"
 
+// --- Local history persistence (fallback when Redis is disabled) ---
+const LS_HISTORY_PREFIX = "newsbot_history_";
+function saveHistoryToLocal(sessionId: string, msgs: Message[]) {
+  try { localStorage.setItem(LS_HISTORY_PREFIX + sessionId, JSON.stringify(msgs)); } catch {}
+}
+function getHistoryFromLocal(sessionId: string): Message[] | null {
+  try {
+    const raw = localStorage.getItem(LS_HISTORY_PREFIX + sessionId);
+    if (!raw) return null;
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.map((m:any)=>({ ...m, timestamp: new Date(m.timestamp) })) : null;
+  } catch { return null; }
+}
+function clearHistoryFromLocal(sessionId: string) {
+  try { localStorage.removeItem(LS_HISTORY_PREFIX + sessionId); } catch {}
+}
+
+
 import { cn } from "@/lib/utils"
 import {
   ResizablePanelGroup,
@@ -76,6 +94,17 @@ const sessionUpdaterRef = useRef<((messages: any[]) => void) | null>(null)
     }
   }, [messages])
 
+  // persist history on every change
+  useEffect(() => {
+    if (!sessionId) return
+    saveHistoryToLocal(sessionId, messages)
+    // also update sidebar via sessionUpdater
+    if (sessionUpdaterRef.current) {
+      sessionUpdaterRef.current(messages)
+    }
+  }, [messages, sessionId])
+
+
   // update session info in localStorage via SessionSidebar
   useEffect(() => {
     if (messages.length > 0 && sessionUpdaterRef.current) {
@@ -96,19 +125,35 @@ const sessionUpdaterRef = useRef<((messages: any[]) => void) | null>(null)
     if (!sessionId) return
     setIsLoadingHistory(true)
     try {
-      const response = await fetch(`/api/session/${sessionId}`)
+      // Try local first
+      const local = getHistoryFromLocal(sessionId)
+      if (local && local.length) {
+        setMessages(local)
+        return
+      }
+      // Then server
+      const response = await fetch(`/api/session/${sessionId}`, { cache: "no-cache" })
       if (response.ok) {
         const data = await response.json()
-        const historyMessages = data.history.map((msg: any) => ({
+        const historyMessages = (data?.history ?? []).map((msg: any) => ({
           ...msg,
           timestamp: new Date(msg.timestamp),
         }))
-        setMessages(historyMessages)
+        if (historyMessages.length) {
+          setMessages(historyMessages)
+          saveHistoryToLocal(sessionId, historyMessages)
+        } else {
+          setMessages([])
+        }
+      } else {
+        // If server fails, keep any local (could be empty)
+        const fallback = getHistoryFromLocal(sessionId) || []
+        setMessages(fallback)
       }
     } finally {
       setIsLoadingHistory(false)
     }
-  }, [])
+}, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
